@@ -1,6 +1,6 @@
 // API connector for the real backend server.
 // The Vite dev proxy forwards `/api` requests to the backend at http://localhost:5000.
-const API_BASE = "/api";
+const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 
 const jsonHeaders = {
   "Content-Type": "application/json",
@@ -67,7 +67,8 @@ export const api = {
     const registeredIds = new Set(registeredCourses.map((course) => course.id));
     return courses.filter(
       (course) =>
-        !registeredIds.has(course.id) && Number(course.enrolled) < Number(course.capacity),
+        !registeredIds.has(course.id) &&
+        Number(course.enrolled) < Number(course.capacity),
     );
   },
 
