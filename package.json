@@ -1,0 +1,12 @@
+{
+  "name": "distributed-system-root",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "cd Client/Frontend && npm run dev",
+    "frontend": "cd Client/Frontend && npm run dev",
+    "backend": "cd Server && npm start",
+    "install:frontend": "cd Client/Frontend && npm install",
+    "install:backend": "cd Server && npm install"
+  }
+}
