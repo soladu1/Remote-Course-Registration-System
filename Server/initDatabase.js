@@ -5,11 +5,11 @@ const ADMIN_USERNAME = "@sol";
 const ADMIN_PASSWORD = "@sol123";
 
 const initializeDatabase = async () => {
-  const connection = db.promise();
+  const connection = db;
 
   await connection.query(`
     CREATE TABLE IF NOT EXISTS students (
-      id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      id SERIAL PRIMARY KEY,
       username VARCHAR(255) NOT NULL UNIQUE,
       password VARCHAR(255) NOT NULL,
       name VARCHAR(255) NOT NULL,
@@ -22,7 +22,7 @@ const initializeDatabase = async () => {
 
   await connection.query(`
     CREATE TABLE IF NOT EXISTS courses (
-      course_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      course_id SERIAL PRIMARY KEY,
       code VARCHAR(50) NOT NULL,
       name VARCHAR(255) NOT NULL,
       department VARCHAR(100) NOT NULL DEFAULT 'General',
@@ -34,11 +34,11 @@ const initializeDatabase = async () => {
 
   await connection.query(`
     CREATE TABLE IF NOT EXISTS registrations (
-      id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      id SERIAL PRIMARY KEY,
       student_id INT NOT NULL,
       course_id INT NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE KEY unique_registration (student_id, course_id),
+      UNIQUE (student_id, course_id),
       CONSTRAINT fk_registrations_student
         FOREIGN KEY (student_id) REFERENCES students(id)
         ON DELETE CASCADE,
@@ -48,6 +48,7 @@ const initializeDatabase = async () => {
     )
   `);
 
+  // Add columns if missing
   await ensureColumn(
     connection,
     "courses",
@@ -72,19 +73,27 @@ const initializeDatabase = async () => {
     "year",
     "VARCHAR(100) NOT NULL DEFAULT 'Year 1'",
   );
-  await ensureUniqueIndex(connection, "students", "email", "unique_students_email");
+
+  // Unique constraints
+  await ensureUniqueIndex(
+    connection,
+    "students",
+    "email",
+    "unique_students_email",
+  );
 
   const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
 
-  const [admins] = await connection.query(
-    "SELECT id FROM students WHERE username = ? LIMIT 1",
+  const adminResult = await connection.query(
+    "SELECT id FROM students WHERE username = $1 LIMIT 1",
     [ADMIN_USERNAME],
   );
+  const admins = adminResult.rows;
 
   if (admins.length === 0) {
     await connection.query(
       `INSERT INTO students (username, password, name, email, role, major, year)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [
         ADMIN_USERNAME,
         hashedPassword,
@@ -99,8 +108,8 @@ const initializeDatabase = async () => {
   } else {
     await connection.query(
       `UPDATE students
-       SET password = ?, name = ?, email = ?, role = ?, major = ?, year = ?
-       WHERE username = ?`,
+       SET password = $1, name = $2, email = $3, role = $4, major = $5, year = $6
+       WHERE username = $7`,
       [
         hashedPassword,
         "Sol Admin",
@@ -116,38 +125,41 @@ const initializeDatabase = async () => {
 };
 
 const ensureColumn = async (connection, tableName, columnName, definition) => {
-  const [rows] = await connection.query(
+  const result = await connection.query(
     `
-      SELECT COLUMN_NAME
-      FROM INFORMATION_SCHEMA.COLUMNS
-      WHERE TABLE_SCHEMA = DATABASE()
-        AND TABLE_NAME = ?
-        AND COLUMN_NAME = ?
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = $1
+        AND column_name = $2
     `,
     [tableName, columnName],
   );
 
-  if (rows.length === 0) {
+  if (result.rows.length === 0) {
     await connection.query(
       `ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`,
     );
   }
 };
 
-const ensureUniqueIndex = async (connection, tableName, columnName, indexName) => {
-  const [rows] = await connection.query(
+const ensureUniqueIndex = async (
+  connection,
+  tableName,
+  columnName,
+  indexName,
+) => {
+  const result = await connection.query(
     `
-      SELECT INDEX_NAME
-      FROM INFORMATION_SCHEMA.STATISTICS
-      WHERE TABLE_SCHEMA = DATABASE()
-        AND TABLE_NAME = ?
-        AND COLUMN_NAME = ?
-        AND NON_UNIQUE = 0
+      SELECT indexname
+      FROM pg_indexes
+      WHERE tablename = $1
+        AND indexname = $2
     `,
-    [tableName, columnName],
+    [tableName, indexName],
   );
 
-  if (rows.length === 0) {
+  if (result.rows.length === 0) {
     await connection.query(
       `ALTER TABLE ${tableName} ADD CONSTRAINT ${indexName} UNIQUE (${columnName})`,
     );
