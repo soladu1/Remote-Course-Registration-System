@@ -120,14 +120,6 @@ const LoginScreen = ({ theme, setTheme }) => {
                 {success}
               </div>
             )}
-            {!isRegistering && (
-              <div className="rounded-3xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 shadow-sm shadow-amber-500/10">
-                Admin login: username{" "}
-                <span className="font-semibold">@sol</span>
-                {" "}and password{" "}
-                <span className="font-semibold">@sol123</span>
-              </div>
-            )}
 
             <div className="space-y-3">
               <div>
