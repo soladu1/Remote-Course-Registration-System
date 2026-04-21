@@ -22,21 +22,17 @@ exports.login = async (req, res) => {
 
     const result = await db.query(
       "SELECT id, username, password, name, email, role, major, year FROM students WHERE username = $1",
-      [username]
+      [username],
     );
     const results = result.rows;
 
     if (results.length === 0)
-      return res
-        .status(401)
-        .json({ message: "Invalid username or password" });
+      return res.status(401).json({ message: "Invalid username or password" });
 
     const user = results[0];
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch)
-      return res
-        .status(401)
-        .json({ message: "Invalid username or password" });
+      return res.status(401).json({ message: "Invalid username or password" });
     res.json(sanitizeStudent(user));
   } catch (err) {
     res.status(500).json(err);
@@ -52,14 +48,13 @@ exports.register = async (req, res) => {
 
     const existingResult = await db.query(
       "SELECT id, username, email FROM students WHERE username = $1 OR email = $2",
-      [username, email]
+      [username, email],
     );
     const existing = existingResult.rows;
 
     if (existing.some((student) => student.email === email)) {
       return res.status(409).json({
-        message:
-          "Email is already registered. Please login to your account",
+        message: "Email is already registered. Please login to your account",
       });
     }
     if (existing.some((student) => student.username === username))
@@ -69,13 +64,13 @@ exports.register = async (req, res) => {
 
     const insertResult = await db.query(
       "INSERT INTO students (username, password, name, email, role, major, year) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
-      [username, hashedPassword, name, email, "Student", major, year]
+      [username, hashedPassword, name, email, "Student", major, year],
     );
     const newId = insertResult.rows[0].id;
 
     const selectResult = await db.query(
       "SELECT id, username, name, email, role, major, year FROM students WHERE id = $1",
-      [newId]
+      [newId],
     );
     res.status(201).json(sanitizeStudent(selectResult.rows[0]));
   } catch (err) {
@@ -88,7 +83,7 @@ exports.getStudent = async (req, res) => {
     const { id } = req.params;
     const result = await db.query(
       "SELECT id, username, name, email, role, major, year FROM students WHERE id = $1",
-      [id]
+      [id],
     );
     const results = result.rows;
 
@@ -111,7 +106,7 @@ exports.updateStudent = async (req, res) => {
 
     const result = await db.query(
       "UPDATE students SET name = $1, email = $2, major = $3, year = $4 WHERE id = $5 RETURNING id, username, name, email, role, major, year",
-      [name, email, major, year, id]
+      [name, email, major, year, id],
     );
 
     if (result.rows.length === 0)
@@ -126,7 +121,7 @@ exports.updateStudent = async (req, res) => {
 exports.getAllStudents = async (req, res) => {
   try {
     const result = await db.query(
-      "SELECT id, username, name, email, role, major, year FROM students ORDER BY id ASC"
+      "SELECT id, username, name, email, role, major, year FROM students ORDER BY id ASC",
     );
     res.json(result.rows.map(sanitizeStudent));
   } catch (err) {
