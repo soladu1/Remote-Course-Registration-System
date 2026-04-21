@@ -1,6 +1,6 @@
 // API connector for the real backend server.
 // The Vite dev proxy forwards `/api` requests to the backend at http://localhost:5000.
-const API_BASE = import.meta.env.VITE_API_URL;
+const API_BASE = "https://remote-course-registration-system.onrender.com";
 
 const jsonHeaders = {
   "Content-Type": "application/json",
