@@ -5,9 +5,15 @@ const { initializeDatabase } = require("./initDatabase");
 
 const app = express();
 
-app.use(cors());
+// ✅ CORS for frontend
+app.use(cors({
+  origin: "https://remotecourseregistrationsystem.netlify.app",
+  credentials: true
+}));
+
 app.use(express.json());
 
+// routes
 app.use("/courses", require("./routes/courseRoutes"));
 app.use("/registration", require("./routes/registrationRoutes"));
 app.use("/students", require("./routes/studentRoutes"));
