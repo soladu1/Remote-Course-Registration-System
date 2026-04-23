@@ -4,6 +4,6 @@ const controller = require("../controllers/registrationController");
 
 router.post("/register", controller.register);
 router.post("/drop", controller.drop);
-router.get("/status/:id", controller.getStatus);
+router.get("/status/:studentId", controller.getStatus);
 
 module.exports = router;
